@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => {
 
   const port = isNonEmptyString(REACT_APP_PORT)
     ? parseInt(REACT_APP_PORT)
-    : 3001;
+    : 3099;
 
   const CHUNK_SIZE_WARNING_LIMIT = 1024 * 1024; // 1MB
   // Please don't increase this limit for main index chunk

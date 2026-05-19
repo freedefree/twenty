@@ -2,6 +2,7 @@ import { NavigationMenuItemType } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 
 import { type EnrichedObjectMetadataItem } from '@/object-metadata/types/EnrichedObjectMetadataItem';
+import { isLeadLikeObjectMetadataItem } from '@/object-metadata/utils/isLeadLikeObjectMetadataItem';
 import { type View } from '@/views/types/View';
 import { type NavigationMenuItem } from '~/generated-metadata/graphql';
 
@@ -21,11 +22,19 @@ export const getObjectMetadataForNavigationMenuItem = (
     navigationMenuItem.type === NavigationMenuItemType.OBJECT &&
     isDefined(navigationMenuItem.targetObjectMetadataId)
   ) {
-    return (
+    const objectMetadataItem =
       objectMetadataItems.find(
         (meta) => meta.id === navigationMenuItem.targetObjectMetadataId,
-      ) ?? null
-    );
+      ) ?? null;
+
+    if (
+      isDefined(objectMetadataItem) &&
+      isLeadLikeObjectMetadataItem(objectMetadataItem)
+    ) {
+      return null;
+    }
+
+    return objectMetadataItem;
   }
 
   if (
@@ -36,21 +45,37 @@ export const getObjectMetadataForNavigationMenuItem = (
     if (!isDefined(view)) {
       return null;
     }
-    return (
+    const objectMetadataItem =
       objectMetadataItems.find((meta) => meta.id === view.objectMetadataId) ??
-      null
-    );
+      null;
+
+    if (
+      isDefined(objectMetadataItem) &&
+      isLeadLikeObjectMetadataItem(objectMetadataItem)
+    ) {
+      return null;
+    }
+
+    return objectMetadataItem;
   }
 
   if (
     navigationMenuItem.type === NavigationMenuItemType.RECORD &&
     isDefined(navigationMenuItem.targetObjectMetadataId)
   ) {
-    return (
+    const objectMetadataItem =
       objectMetadataItems.find(
         (meta) => meta.id === navigationMenuItem.targetObjectMetadataId,
-      ) ?? null
-    );
+      ) ?? null;
+
+    if (
+      isDefined(objectMetadataItem) &&
+      isLeadLikeObjectMetadataItem(objectMetadataItem)
+    ) {
+      return null;
+    }
+
+    return objectMetadataItem;
   }
 
   return null;

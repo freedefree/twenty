@@ -1,6 +1,8 @@
-import { objectMetadataItemsWithFieldsSelector } from '@/object-metadata/states/objectMetadataItemsWithFieldsSelector';
 import { useMemo } from 'react';
+
+import { objectMetadataItemsWithFieldsSelector } from '@/object-metadata/states/objectMetadataItemsWithFieldsSelector';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
+import { isLeadLikeObjectMetadataItem } from '@/object-metadata/utils/isLeadLikeObjectMetadataItem';
 
 export const useFilteredObjectMetadataItems = () => {
   const objectMetadataItemsWithFields = useAtomStateValue(
@@ -11,7 +13,13 @@ export const useFilteredObjectMetadataItems = () => {
   const activeNonSystemObjectMetadataItems = useMemo(
     () =>
       objectMetadataItems.filter(
-        ({ isActive, isSystem }) => isActive && !isSystem,
+        ({ isActive, isSystem, nameSingular, namePlural }) =>
+          isActive &&
+          !isSystem &&
+          !isLeadLikeObjectMetadataItem({
+            nameSingular,
+            namePlural,
+          }),
       ),
     [objectMetadataItems],
   );
@@ -19,7 +27,14 @@ export const useFilteredObjectMetadataItems = () => {
   const activeObjectMetadataItems = useMemo(
     () =>
       objectMetadataItems
-        .filter(({ isActive }) => isActive)
+        .filter(
+          ({ isActive, nameSingular, namePlural }) =>
+            isActive &&
+            !isLeadLikeObjectMetadataItem({
+              nameSingular,
+              namePlural,
+            }),
+        )
         .sort((a, b) => a.labelSingular.localeCompare(b.labelSingular)),
     [objectMetadataItems],
   );
@@ -37,7 +52,13 @@ export const useFilteredObjectMetadataItems = () => {
   });
 
   const inactiveNonSystemObjectMetadataItems = objectMetadataItems.filter(
-    ({ isActive, isSystem }) => !isActive && !isSystem,
+    ({ isActive, isSystem, nameSingular, namePlural }) =>
+      !isActive &&
+      !isSystem &&
+      !isLeadLikeObjectMetadataItem({
+        nameSingular,
+        namePlural,
+      }),
   );
 
   const findActiveObjectMetadataItemByNamePlural = (namePlural: string) =>

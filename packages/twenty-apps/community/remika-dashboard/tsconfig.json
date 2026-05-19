@@ -1,0 +1,40 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "sourceMap": true,
+    "declaration": true,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "jsx": "react-jsx",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "allowUnreachableCode": false,
+    "strict": true,
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "strictBindCallApply": false,
+    "target": "es2018",
+    "module": "esnext",
+    "lib": ["es2020", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["../../../twenty-sdk/src/*"],
+      "src/*": ["./src/*"],
+      "~/*": ["./*"],
+      "twenty-sdk/define": ["../../../twenty-sdk/src/sdk/define/index.ts"],
+      "twenty-sdk/front-component": [
+        "../../../twenty-sdk/src/sdk/front-component/index.ts"
+      ],
+      "twenty-sdk/ui": ["../../../twenty-sdk/src/ui/index.ts"],
+      "twenty-ui": ["../../../twenty-ui/src/index.ts"],
+      "twenty-ui/*": ["../../../twenty-ui/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+}

@@ -48,7 +48,7 @@ export const SentryInitEffect = () => {
               }),
             ],
             tracePropagationTargets: [
-              'localhost:3001',
+              'localhost:3099',
               REACT_APP_SERVER_BASE_URL,
             ],
             tracesSampleRate: 1.0,

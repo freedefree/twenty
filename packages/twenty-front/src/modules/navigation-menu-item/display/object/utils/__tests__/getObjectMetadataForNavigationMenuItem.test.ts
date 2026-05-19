@@ -14,6 +14,11 @@ const mockObjectMetadataItems: EnrichedObjectMetadataItem[] = [
     nameSingular: 'company',
     namePlural: 'companies',
   } as EnrichedObjectMetadataItem,
+  {
+    id: 'metadata-3',
+    nameSingular: 'lead',
+    namePlural: 'leads',
+  } as EnrichedObjectMetadataItem,
 ];
 
 const mockViews: View[] = [
@@ -99,6 +104,19 @@ describe('getObjectMetadataForNavigationMenuItem', () => {
       mockObjectMetadataItems,
       mockViews,
     );
+    expect(result).toBeNull();
+  });
+
+  it('should return null for lead-like objects', () => {
+    const result = getObjectMetadataForNavigationMenuItem(
+      {
+        type: NavigationMenuItemType.OBJECT,
+        targetObjectMetadataId: 'metadata-3',
+      },
+      mockObjectMetadataItems,
+      mockViews,
+    );
+
     expect(result).toBeNull();
   });
 

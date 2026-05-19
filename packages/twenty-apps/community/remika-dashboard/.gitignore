@@ -1,0 +1,6 @@
+node_modules
+dist
+.twenty
+.env
+.env.local
+
