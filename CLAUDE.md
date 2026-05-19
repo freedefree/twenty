@@ -202,7 +202,7 @@ IMPORTANT: Use Context7 for code generation, setup or configuration steps, or li
 
 ## Dev Environment Setup
 
-All dev environments (Claude Code web, Cursor, local) use one script:
+All dev environments (Claude Code web, Codex, local) use one script:
 
 ```bash
 bash packages/twenty-utils/setup-dev-env.sh
@@ -221,4 +221,4 @@ This handles everything: starts Postgres + Redis (auto-detects local services vs
 - `nx.json` - Nx workspace configuration with task definitions
 - `tsconfig.base.json` - Base TypeScript configuration
 - `package.json` - Root package with workspace definitions
-- `.cursor/rules/` - Detailed development guidelines and best practices
+- 工作区规则（当前保存在 `.cursor/rules/`）- Detailed development guidelines and best practices
