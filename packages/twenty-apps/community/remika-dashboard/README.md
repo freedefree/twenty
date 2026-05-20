@@ -7,6 +7,10 @@ This app follows Twenty's official app layout model:
 - React front components render inside Twenty UI as `FRONT_COMPONENT` widgets.
 - A `definePageLayoutTab` manifest adds a `Remika` tab to the standard `My First Dashboard` layout.
 - The widgets read Remika's existing APIs directly from the browser with credentials included.
+- The dashboard tab currently includes:
+  - CRM overview
+  - mortgage rates
+  - selective People import / link / merge from Remika registered users
 
 ## Local Setup
 
@@ -20,6 +24,8 @@ yarn twenty dev --once
 ```
 
 `REMIKA_API_BASE_URL` defaults to `http://localhost:3000`. Override it from the Twenty app settings when the Remika API runs somewhere else.
+
+`REMIKA_API_PUBLIC_KEY` is the browser-facing CRM public API key used by the import widget. Keep it aligned with the Remika public CRM API contract for the current dev workspace.
 
 When running the remika bridge in Twenty dev, these additional environment variables are available and are wired by `packages/twenty-docker/docker-compose.remika-dev.yml`:
 
