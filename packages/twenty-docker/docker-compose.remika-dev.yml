@@ -7,6 +7,8 @@ services:
       - remika-twenty-server-local-data:/app/packages/twenty-server/.local-storage
     ports:
       - "3100:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       PG_DATABASE_URL: postgres://${PG_DATABASE_USER:-postgres}:${PG_DATABASE_PASSWORD:-postgres}@db:${PG_DATABASE_PORT:-5432}/default
       SERVER_URL: ${SERVER_URL:-http://localhost:3100}
@@ -15,6 +17,9 @@ services:
       DISABLE_CRON_JOBS_REGISTRATION: ${DISABLE_CRON_JOBS_REGISTRATION:-false}
       STORAGE_TYPE: ${STORAGE_TYPE:-local}
       APP_SECRET: ${APP_SECRET:-remika_twenty_dev_secret_change_before_production}
+      REMIKA_API_BASE_URL: ${REMIKA_API_BASE_URL:-http://host.docker.internal:3000}
+      REMIKA_API_PUBLIC_KEY: ${REMIKA_API_PUBLIC_KEY:-dev-crm-public-api-key}
+      REMIKA_WEBHOOK_SECRET: ${REMIKA_WEBHOOK_SECRET:-dev-crm-webhook-secret}
     depends_on:
       db:
         condition: service_healthy
@@ -32,6 +37,8 @@ services:
     volumes:
       - remika-twenty-server-local-data:/app/packages/twenty-server/.local-storage
     command: ["yarn", "worker:prod"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       PG_DATABASE_URL: postgres://${PG_DATABASE_USER:-postgres}:${PG_DATABASE_PASSWORD:-postgres}@db:${PG_DATABASE_PORT:-5432}/default
       SERVER_URL: ${SERVER_URL:-http://localhost:3100}
@@ -40,6 +47,9 @@ services:
       DISABLE_CRON_JOBS_REGISTRATION: "true"
       STORAGE_TYPE: ${STORAGE_TYPE:-local}
       APP_SECRET: ${APP_SECRET:-remika_twenty_dev_secret_change_before_production}
+      REMIKA_API_BASE_URL: ${REMIKA_API_BASE_URL:-http://host.docker.internal:3000}
+      REMIKA_API_PUBLIC_KEY: ${REMIKA_API_PUBLIC_KEY:-dev-crm-public-api-key}
+      REMIKA_WEBHOOK_SECRET: ${REMIKA_WEBHOOK_SECRET:-dev-crm-webhook-secret}
     depends_on:
       db:
         condition: service_healthy

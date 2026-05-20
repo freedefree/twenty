@@ -21,5 +21,11 @@ yarn twenty dev --once
 
 `REMIKA_API_BASE_URL` defaults to `http://localhost:3000`. Override it from the Twenty app settings when the Remika API runs somewhere else.
 
-For authenticated CRM data, the browser must have a valid Remika session cookie for the configured Remika origin.
+When running the remika bridge in Twenty dev, these additional environment variables are available and are wired by `packages/twenty-docker/docker-compose.remika-dev.yml`:
 
+- `REMIKA_API_PUBLIC_KEY` - public CRM API key used by the bridge workflows.
+- `REMIKA_WEBHOOK_SECRET` - webhook secret used by bridge webhook ingest.
+
+In dev, the Twenty seeder can prefill Remika bridge workflows so the dashboard app has object, timeline, and signal coverage without hand-creating every workflow.
+
+For authenticated CRM data, the browser must have a valid Remika session cookie for the configured Remika origin.
