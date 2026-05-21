@@ -51,6 +51,65 @@ function jsonStringify(value: Record<string, unknown>): string {
   return JSON.stringify(value);
 }
 
+function normalizeRemikaOpportunityStage(value: unknown): string {
+  const stage = `${value || ''}`.trim().toUpperCase();
+  switch (stage) {
+    case 'NEW':
+    case 'BROWSING':
+      return 'browsing';
+    case 'SCREENING':
+    case 'MEETING':
+    case 'TOURING':
+      return 'touring';
+    case 'PROPOSAL':
+    case 'OFFER':
+      return 'offer';
+    case 'CUSTOMER':
+    case 'CLOSED':
+      return 'closed';
+    default:
+      return 'browsing';
+  }
+}
+
+function normalizeRemikaTaskStatus(value: unknown): string {
+  const status = `${value || ''}`.trim().toUpperCase();
+  switch (status) {
+    case 'TODO':
+    case 'OPEN':
+      return 'open';
+    case 'IN_PROGRESS':
+    case 'SNOOZED':
+      return 'snoozed';
+    case 'DONE':
+      return 'done';
+    case 'CANCELED':
+    case 'CANCELLED':
+      return 'canceled';
+    default:
+      return 'open';
+  }
+}
+
+function buildBridgeDeleteBody({
+  triggerId,
+  workspaceId,
+  objectName,
+  action,
+}: BridgeBodyContext): Record<string, unknown> {
+  return {
+    source: 'twenty',
+    recordId: `{{${triggerId}.properties.before.id}}`,
+    metadata: {
+      source: 'twenty',
+      workspaceId,
+      objectName,
+      eventType: `${objectName}.${action.toLowerCase()}`,
+      recordId: `{{${triggerId}.properties.before.id}}`,
+    },
+  }
+}
+
 function getBridgeIds(
   workspaceId: string,
   objectName: string,
@@ -122,7 +181,13 @@ function buildBridgeWorkflowBody({
       return {
         name: `{{${triggerId}.properties.after.name.firstName}} {{${triggerId}.properties.after.name.lastName}}`,
         email: `{{${triggerId}.properties.after.emails.primaryEmail}}`,
-        phone: `{{${triggerId}.properties.after.phones.primaryPhoneNumber}}`,
+        phone: `{{${triggerId}.properties.after.phones.primaryPhoneCallingCode}} {{${triggerId}.properties.after.phones.primaryPhoneNumber}}`,
+        phoneCallingCode: `{{${triggerId}.properties.after.phones.primaryPhoneCallingCode}}`,
+        phoneCountryCode: `{{${triggerId}.properties.after.phones.primaryPhoneCountryCode}}`,
+        contactRole: `{{${triggerId}.properties.after.contactRole}}`,
+        companyId: `{{${triggerId}.properties.after.companyId}}`,
+        city: `{{${triggerId}.properties.after.city}}`,
+        jobTitle: `{{${triggerId}.properties.after.jobTitle}}`,
         source: 'twenty',
         metadata: {
           source: 'twenty',
@@ -136,7 +201,9 @@ function buildBridgeWorkflowBody({
       return {
         contactId: `{{${triggerId}.properties.after.pointOfContactId}}`,
         type: 'buyer',
-        stage: `{{${triggerId}.properties.after.stage}}`,
+        stage: normalizeRemikaOpportunityStage(
+          `{{${triggerId}.properties.after.stage}}`,
+        ),
         city: `{{${triggerId}.properties.after.city}}`,
         source: 'twenty',
         metadata: {
@@ -147,7 +214,9 @@ function buildBridgeWorkflowBody({
           recordId: `{{${triggerId}.properties.after.id}}`,
           companyId: `{{${triggerId}.properties.after.companyId}}`,
           pointOfContactId: `{{${triggerId}.properties.after.pointOfContactId}}`,
-          stage: `{{${triggerId}.properties.after.stage}}`,
+          stage: normalizeRemikaOpportunityStage(
+            `{{${triggerId}.properties.after.stage}}`,
+          ),
         },
       };
     case 'task':
@@ -155,7 +224,7 @@ function buildBridgeWorkflowBody({
         contactId: `{{${triggerId}.properties.after.contactId}}`,
         opportunityId: `{{${triggerId}.properties.after.opportunityId}}`,
         assignedToUserId: `{{${triggerId}.properties.after.assigneeId}}`,
-        status: `{{${triggerId}.properties.after.status}}`,
+        status: normalizeRemikaTaskStatus(`{{${triggerId}.properties.after.status}}`),
         priority: `{{${triggerId}.properties.after.priority}}`,
         dueAt: `{{${triggerId}.properties.after.dueAt}}`,
         completedAt: `{{${triggerId}.properties.after.completedAt}}`,
@@ -343,7 +412,14 @@ function buildBridgeWorkflowRecords({
                 action,
               }),
             )
-          : undefined;
+          : jsonStringify(
+              buildBridgeDeleteBody({
+                triggerId: 'trigger',
+                workspaceId,
+                objectName: definition.objectName,
+                action,
+              }),
+            );
 
       const step = buildWorkflowHttpRequestStep({
         id: triggerId,
@@ -504,6 +580,38 @@ export const prefillRemikaBridgeIntegrations = async ({
         .orIgnore()
         .values(bridgeRows.map((row) => row.workflowAutomatedTrigger))
         .execute();
+
+      await Promise.all(
+        bridgeRows.map(async ({ workflow, workflowVersion, workflowAutomatedTrigger }) => {
+          const { id: workflowId, ...workflowUpdate } = workflow;
+          const { id: workflowVersionId, ...workflowVersionUpdate } = workflowVersion;
+          const {
+            id: workflowAutomatedTriggerId,
+            ...workflowAutomatedTriggerUpdate
+          } = workflowAutomatedTrigger;
+
+          await entityManager
+            .createQueryBuilder()
+            .update(`${schemaName}.workflow`)
+            .set(workflowUpdate)
+            .where('id = :id', { id: workflowId })
+            .execute();
+
+          await entityManager
+            .createQueryBuilder()
+            .update(`${schemaName}.workflowVersion`)
+            .set(workflowVersionUpdate)
+            .where('id = :id', { id: workflowVersionId })
+            .execute();
+
+          await entityManager
+            .createQueryBuilder()
+            .update(`${schemaName}.workflowAutomatedTrigger`)
+            .set(workflowAutomatedTriggerUpdate)
+            .where('id = :id', { id: workflowAutomatedTriggerId })
+            .execute();
+        }),
+      );
     });
   }
 

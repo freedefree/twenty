@@ -15,8 +15,10 @@ services:
       REDIS_URL: redis://redis:6379
       DISABLE_DB_MIGRATIONS: ${DISABLE_DB_MIGRATIONS:-false}
       DISABLE_CRON_JOBS_REGISTRATION: ${DISABLE_CRON_JOBS_REGISTRATION:-false}
+      LOGIC_FUNCTION_TYPE: ${LOGIC_FUNCTION_TYPE:-LOCAL}
       STORAGE_TYPE: ${STORAGE_TYPE:-local}
       APP_SECRET: ${APP_SECRET:-remika_twenty_dev_secret_change_before_production}
+      OUTBOUND_HTTP_SAFE_MODE_ENABLED: "false"
       REMIKA_API_BASE_URL: ${REMIKA_API_BASE_URL:-http://host.docker.internal:3000}
       REMIKA_API_PUBLIC_KEY: ${REMIKA_API_PUBLIC_KEY:-dev-crm-public-api-key}
       REMIKA_WEBHOOK_SECRET: ${REMIKA_WEBHOOK_SECRET:-dev-crm-webhook-secret}
@@ -45,8 +47,10 @@ services:
       REDIS_URL: redis://redis:6379
       DISABLE_DB_MIGRATIONS: "true"
       DISABLE_CRON_JOBS_REGISTRATION: "true"
+      LOGIC_FUNCTION_TYPE: ${LOGIC_FUNCTION_TYPE:-LOCAL}
       STORAGE_TYPE: ${STORAGE_TYPE:-local}
       APP_SECRET: ${APP_SECRET:-remika_twenty_dev_secret_change_before_production}
+      OUTBOUND_HTTP_SAFE_MODE_ENABLED: "false"
       REMIKA_API_BASE_URL: ${REMIKA_API_BASE_URL:-http://host.docker.internal:3000}
       REMIKA_API_PUBLIC_KEY: ${REMIKA_API_PUBLIC_KEY:-dev-crm-public-api-key}
       REMIKA_WEBHOOK_SECRET: ${REMIKA_WEBHOOK_SECRET:-dev-crm-webhook-secret}

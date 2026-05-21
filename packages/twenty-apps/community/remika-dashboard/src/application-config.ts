@@ -15,7 +15,6 @@ export default defineApplication({
   universalIdentifier: APPLICATION_UNIVERSAL_IDENTIFIER,
   displayName: APP_DISPLAY_NAME,
   description: APP_DESCRIPTION,
-  icon: 'IconLayoutDashboard',
   applicationVariables: {
     REMIKA_API_BASE_URL: {
       universalIdentifier: REMIKA_API_BASE_URL_VARIABLE_UNIVERSAL_IDENTIFIER,
