@@ -5,6 +5,7 @@ import {
   type ObjectRecordCreateEvent,
   type ObjectRecordDeleteEvent,
   type ObjectRecordDestroyEvent,
+  type ObjectRecordRestoreEvent,
   type ObjectRecordUpdateEvent,
   type ObjectRecordUpsertEvent,
 } from 'twenty-shared/database-events';
@@ -102,6 +103,23 @@ export class WorkflowDatabaseEventTriggerListener {
     await this.handleEvent({
       payload: clonedPayload,
       action: DatabaseEventAction.DELETED,
+    });
+  }
+
+  @OnDatabaseBatchEvent('*', DatabaseEventAction.RESTORED)
+  async handleObjectRecordRestoreEvent(
+    payload: WorkspaceEventBatch<ObjectRecordRestoreEvent>,
+  ) {
+    if (await this.shouldIgnoreEvent(payload)) {
+      return;
+    }
+
+    const clonedPayload = structuredClone(payload);
+
+    await this.enrichRestoredEvent(clonedPayload);
+    await this.handleEvent({
+      payload: clonedPayload,
+      action: DatabaseEventAction.RESTORED,
     });
   }
 
@@ -204,6 +222,35 @@ export class WorkflowDatabaseEventTriggerListener {
 
     await this.enrichRecordsWithRelations({
       records: payload.events.map((event) => event.properties.before),
+      workspaceId,
+      flatObjectMetadata,
+      flatObjectMetadataMaps,
+      flatFieldMetadataMaps,
+    });
+  }
+
+  private async enrichRestoredEvent(
+    payload: WorkspaceEventBatch<ObjectRecordRestoreEvent>,
+  ) {
+    const workspaceId = payload.workspaceId;
+    const {
+      flatObjectMetadata,
+      flatObjectMetadataMaps,
+      flatFieldMetadataMaps,
+    } = await this.workflowCommonWorkspaceService.getObjectMetadataInfo(
+      payload.objectMetadata.nameSingular,
+      workspaceId,
+    );
+
+    await this.enrichRecordsWithRelations({
+      records: payload.events.map((event) => event.properties.before),
+      workspaceId,
+      flatObjectMetadata,
+      flatObjectMetadataMaps,
+      flatFieldMetadataMaps,
+    });
+    await this.enrichRecordsWithRelations({
+      records: payload.events.map((event) => event.properties.after),
       workspaceId,
       flatObjectMetadata,
       flatObjectMetadataMaps,
@@ -391,7 +438,10 @@ export class WorkflowDatabaseEventTriggerListener {
     eventListener: WorkflowAutomatedTriggerWorkspaceEntity;
     action: DatabaseEventAction;
   }) {
-    if (action === DatabaseEventAction.UPDATED) {
+    if (
+      action === DatabaseEventAction.UPDATED ||
+      action === DatabaseEventAction.RESTORED
+    ) {
       const settings = eventListener.settings as UpdateEventTriggerSettings;
       const updateEventPayload = eventPayload as ObjectRecordUpdateEvent;
 

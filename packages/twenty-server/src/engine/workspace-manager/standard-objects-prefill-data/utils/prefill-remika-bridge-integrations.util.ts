@@ -12,7 +12,7 @@ import { buildObjectIdByNameMaps } from 'src/engine/metadata-modules/flat-object
 import { type WebhookService } from 'src/engine/metadata-modules/webhook/webhook.service';
 import { generateFakeObjectRecordEvent } from 'src/modules/workflow/workflow-builder/workflow-schema/utils/generate-fake-object-record-event';
 
-type BridgeAction = 'UPSERTED' | 'DELETED';
+type BridgeAction = 'UPSERTED' | 'DELETED' | 'RESTORED';
 
 type BridgeObjectName =
   | 'person'
@@ -49,6 +49,13 @@ const REMIKA_BRIDGE_WEBHOOK_DESCRIPTION = 'Remika CRM timeline / signal bridge';
 
 function jsonStringify(value: Record<string, unknown>): string {
   return JSON.stringify(value);
+}
+
+function joinBridgeUrl(baseUrl: string, path: string): string {
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, '');
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+
+  return `${normalizedBaseUrl}${normalizedPath}`;
 }
 
 function normalizeRemikaOpportunityStage(value: unknown): string {
@@ -370,24 +377,26 @@ function buildBridgeWorkflowRecords({
       'x-crm-public-api-key': remikaPublicApiKey,
     };
 
-    return (['UPSERTED', 'DELETED'] as const).map((action, actionIndex) => {
+    return (['UPSERTED', 'DELETED', 'RESTORED'] as const).map((action, actionIndex) => {
       const {
         workflowId,
         workflowVersionId,
         automatedTriggerId,
         workflowName,
       } = getBridgeIds(workspaceId, definition.objectName, action);
-      const triggerId = `${action === 'UPSERTED' ? 'trigger-after' : 'trigger-before'}-${workflowId}`;
+      const triggerId = `${action === 'DELETED' ? 'trigger-before' : 'trigger-after'}-${workflowId}`;
       const eventName = `${definition.objectName}.${action.toLowerCase()}`;
       const remikaPath =
-        action === 'UPSERTED' ? definition.upsertPath : definition.deletePath;
-      const url = new URL(remikaPath, remikaApiBaseUrl).toString();
+        action === 'DELETED' ? definition.deletePath : definition.upsertPath;
+      const url = joinBridgeUrl(remikaApiBaseUrl, remikaPath);
 
       const trigger = {
         name:
           action === 'UPSERTED'
             ? 'Record is created or updated'
-            : 'Record is deleted',
+            : action === 'DELETED'
+              ? 'Record is deleted'
+              : 'Record is restored',
         type: 'DATABASE_EVENT',
         settings: {
           eventName,
@@ -396,16 +405,18 @@ function buildBridgeWorkflowRecords({
             objectInfo,
             action === 'UPSERTED'
               ? DatabaseEventAction.UPSERTED
-              : DatabaseEventAction.DELETED,
+              : action === 'DELETED'
+                ? DatabaseEventAction.DELETED
+                : DatabaseEventAction.RESTORED,
           ),
         },
         nextStepIds: [triggerId],
       };
 
       const body =
-        action === 'UPSERTED'
+        action === 'DELETED'
           ? jsonStringify(
-              definition.buildUpsertBody({
+              buildBridgeDeleteBody({
                 triggerId: 'trigger',
                 workspaceId,
                 objectName: definition.objectName,
@@ -413,7 +424,7 @@ function buildBridgeWorkflowRecords({
               }),
             )
           : jsonStringify(
-              buildBridgeDeleteBody({
+              definition.buildUpsertBody({
                 triggerId: 'trigger',
                 workspaceId,
                 objectName: definition.objectName,
@@ -424,7 +435,10 @@ function buildBridgeWorkflowRecords({
       const step = buildWorkflowHttpRequestStep({
         id: triggerId,
         name: `Sync ${definition.bridgeLabel} to Remika`,
-        method: action === 'UPSERTED' ? 'PUT' : 'DELETE',
+        method:
+          action === 'DELETED'
+            ? 'DELETE'
+            : 'PUT',
         url,
         headers: headerJson,
         ...(body ? { body } : {}),
@@ -466,7 +480,9 @@ function buildBridgeWorkflowRecords({
               objectInfo,
               action === 'UPSERTED'
                 ? DatabaseEventAction.UPSERTED
-                : DatabaseEventAction.DELETED,
+                : action === 'DELETED'
+                  ? DatabaseEventAction.DELETED
+                  : DatabaseEventAction.RESTORED,
             ),
           },
         },

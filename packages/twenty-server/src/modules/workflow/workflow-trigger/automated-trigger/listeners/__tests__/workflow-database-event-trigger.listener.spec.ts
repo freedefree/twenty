@@ -263,6 +263,46 @@ describe('WorkflowDatabaseEventTriggerListener', () => {
       );
     });
 
+    it('should handle restore events correctly', async () => {
+      const restorePayload: WorkspaceEventBatch<any> = {
+        ...mockPayload,
+        name: 'restoreEvent',
+        events: [
+          {
+            ...mockPayload.events[0],
+            properties: {
+              updatedFields: ['field1'],
+              before: { field1: 'old', field2: 'old' },
+              after: { field1: 'new', field2: 'new' },
+            },
+          },
+        ],
+      };
+
+      mockRepository.find.mockResolvedValue([
+        {
+          type: AutomatedTriggerType.DATABASE_EVENT,
+          workflowId,
+          settings: {
+            eventName: 'restoreEvent',
+            fields: ['field1'],
+          },
+        },
+      ]);
+
+      await listener.handleObjectRecordRestoreEvent(restorePayload);
+
+      expect(messageQueueService.add).toHaveBeenCalledWith(
+        WorkflowTriggerJob.name,
+        {
+          workspaceId,
+          workflowId,
+          payload: restorePayload.events[0],
+        },
+        { retryLimit: 3 },
+      );
+    });
+
     it('should handle destroy events correctly', async () => {
       const destroyPayload: WorkspaceEventBatch<any> = {
         ...mockPayload,

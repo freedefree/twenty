@@ -11,7 +11,7 @@ This app follows Twenty's official app layout model:
   - CRM overview
   - mortgage rates
   - selective People import / link / merge from Remika registered users
-  - bidirectional Remika contact mirroring back into Twenty People for create / update / delete changes
+  - bidirectional Remika contact mirroring back into Twenty People for create / update / delete / restore changes
 
 The bridge uses `recordId` / identity links as the canonical binding key, so Remika-origin changes on an existing People row continue to sync even when the row itself originally came from Twenty.
 

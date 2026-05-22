@@ -74,14 +74,13 @@ export class WorkspaceDomainsService {
 
     if (workspaces.length > 1) {
       Logger.warn(
-        `${workspaces.length} workspaces found in database. In single-workspace mode, there should be only one workspace. The Apple seed workspace will be used as fallback if present.`,
+        `${workspaces.length} workspaces found in database. In single-workspace mode, there should be only one workspace. The first non-seed workspace will be used as fallback if present.`,
       );
     }
 
     const foundWorkspace =
-      workspaces.find(
-        (workspace) => workspace.id === SEED_APPLE_WORKSPACE_ID,
-      ) ?? workspaces[0];
+      workspaces.find((workspace) => workspace.id !== SEED_APPLE_WORKSPACE_ID) ??
+      workspaces[0];
 
     assertIsDefinedOrThrow(foundWorkspace, WorkspaceNotFoundDefaultError);
 

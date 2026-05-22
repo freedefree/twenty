@@ -48,6 +48,7 @@ export const generateFakeObjectRecordEvent = (
     case DatabaseEventAction.CREATED:
     case DatabaseEventAction.UPDATED:
     case DatabaseEventAction.UPSERTED:
+    case DatabaseEventAction.RESTORED:
       return generateFakeObjectRecordEventWithPrefix({
         objectMetadataInfo,
         prefix: 'properties.after',
