@@ -5,6 +5,7 @@ import {
   DEFAULT_REMIKA_API_PUBLIC_KEY,
 } from 'src/modules/remika-dashboard/constants';
 import {
+  type CrmClientActivityTargetType,
   type CrmNextActionHandoffIdentityInput,
   type CrmContactImportActionResponse,
   type CrmContactImportCandidatesResponse,
@@ -185,6 +186,20 @@ export const fetchCrmNextActionDetail = <T>(
       organizationId: getRemikaOrganizationId(),
     },
   );
+
+export const fetchCrmClientActivitySummary = <T>(input: {
+  targetType: CrmClientActivityTargetType;
+  targetId: string;
+  window?: '24h' | '7d' | '14d' | '30d';
+}) =>
+  fetchRemikaJson<T>('/api/crm/client-activity', {
+    organizationId: getRemikaOrganizationId(),
+    targetType: input.targetType,
+    targetId: input.targetId,
+    window: input.window || '14d',
+    includeEvidence: 'false',
+    safeForTwenty: 'true',
+  });
 
 export const buildRemikaCrmHandoffUrl = (input: CrmNextActionHandoffIdentityInput) =>
   buildSharedCrmNextActionHandoffUrl(getRemikaApiBaseUrl(), input);

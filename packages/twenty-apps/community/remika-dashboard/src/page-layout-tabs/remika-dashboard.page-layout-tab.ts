@@ -5,6 +5,8 @@ import {
 
 import {
   REMIKA_CRM_OVERVIEW_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
+  REMIKA_CLIENT_ACTIVITY_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
+  REMIKA_CLIENT_ACTIVITY_WIDGET_UNIVERSAL_IDENTIFIER,
   REMIKA_CONTACT_IMPORT_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
   REMIKA_CONTACT_IMPORT_WIDGET_UNIVERSAL_IDENTIFIER,
   REMIKA_CRM_WIDGET_UNIVERSAL_IDENTIFIER,
@@ -59,10 +61,21 @@ export default definePageLayoutTab({
       },
     },
     {
+      universalIdentifier: REMIKA_CLIENT_ACTIVITY_WIDGET_UNIVERSAL_IDENTIFIER,
+      title: 'Client activity',
+      type: 'FRONT_COMPONENT',
+      gridPosition: { row: 8, column: 0, rowSpan: 4, columnSpan: 12 },
+      configuration: {
+        configurationType: 'FRONT_COMPONENT',
+        frontComponentUniversalIdentifier:
+          REMIKA_CLIENT_ACTIVITY_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
+      },
+    },
+    {
       universalIdentifier: REMIKA_CONTACT_IMPORT_WIDGET_UNIVERSAL_IDENTIFIER,
       title: 'Contact import',
       type: 'FRONT_COMPONENT',
-      gridPosition: { row: 8, column: 0, rowSpan: 8, columnSpan: 12 },
+      gridPosition: { row: 12, column: 0, rowSpan: 8, columnSpan: 12 },
       configuration: {
         configurationType: 'FRONT_COMPONENT',
         frontComponentUniversalIdentifier:

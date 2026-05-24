@@ -61,6 +61,13 @@ export type {
   CrmNextActionTaskResponse,
 } from '../../../../../../../../../shared/crm/next-actions';
 
+export type {
+  CrmClientActivitySnapshot,
+  CrmClientActivityTargetType,
+  CrmClientActivityTwentySafeResponse,
+  CrmClientActivityTwentySafeSnapshot,
+} from '../../../../../../../../../shared/crm/client-activity';
+
 export type CrmContactImportMatchType =
   | 'consumer_user_id'
   | 'email'
