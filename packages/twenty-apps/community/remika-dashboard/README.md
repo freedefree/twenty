@@ -10,6 +10,7 @@ This app follows Twenty's official app layout model:
 - The dashboard tab currently includes:
   - CRM overview
   - mortgage rates
+  - readonly Remika next actions with `/my/crm` handoff links
   - selective People import / link / merge from Remika registered users
   - bidirectional Remika contact mirroring back into Twenty People for create / update / delete / restore changes
   - bidirectional Company / Opportunity / Note / Task bridge sync that shares the same `recordId` / identity / sync ledger contract as People
@@ -29,7 +30,7 @@ yarn twenty remote add --api-url http://localhost:3100
 yarn twenty dev --once
 ```
 
-`REMIKA_API_BASE_URL` defaults to `http://localhost:3000`. Override it from the Twenty app settings when the Remika API runs somewhere else.
+`REMIKA_API_BASE_URL` defaults to `http://localhost:3000`. Override it from the Twenty app settings when the Remika API runs somewhere else. In local dev, logic functions may use `http://host.docker.internal:3000`, but browser front components normalize that host back to `http://localhost:3000` because they execute in the user's browser iframe.
 
 `REMIKA_API_PUBLIC_KEY` is the browser-facing CRM public API key used by the import widget. Keep it aligned with the Remika public CRM API contract for the current dev workspace.
 

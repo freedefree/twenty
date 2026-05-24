@@ -2,6 +2,10 @@ import { CoreApiClient } from 'twenty-client-sdk/core';
 
 const DEFAULT_TWENTY_GRAPHQL_URL = 'http://host.docker.internal:3100/graphql';
 
+type ConfigurableCoreApiClientConstructor = new (options?: {
+  url?: string;
+}) => CoreApiClient;
+
 function safeText(value: unknown): string {
   return `${value || ''}`.trim();
 }
@@ -33,7 +37,10 @@ export function resolveTwentyGraphqlUrl() {
 }
 
 export function createTwentyCoreApiClient() {
-  return new CoreApiClient({
+  const ConfigurableCoreApiClient =
+    CoreApiClient as unknown as ConfigurableCoreApiClientConstructor;
+
+  return new ConfigurableCoreApiClient({
     url: resolveTwentyGraphqlUrl(),
   });
 }

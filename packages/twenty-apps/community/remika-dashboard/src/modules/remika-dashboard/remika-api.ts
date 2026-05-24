@@ -16,10 +16,27 @@ import {
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, '');
 
+const normalizeBrowserApiBaseUrl = (value: string) => {
+  const trimmed = trimTrailingSlash(value);
+
+  try {
+    const url = new URL(trimmed);
+
+    if (url.hostname === 'host.docker.internal') {
+      url.hostname = 'localhost';
+      return trimTrailingSlash(url.toString());
+    }
+  } catch {
+    return trimmed;
+  }
+
+  return trimmed;
+};
+
 const getRemikaApiBaseUrl = () => {
   const configured = getApplicationVariable('REMIKA_API_BASE_URL');
 
-  return trimTrailingSlash(configured || DEFAULT_REMIKA_API_BASE_URL);
+  return normalizeBrowserApiBaseUrl(configured || DEFAULT_REMIKA_API_BASE_URL);
 };
 
 const getRemikaOrganizationId = () => {
