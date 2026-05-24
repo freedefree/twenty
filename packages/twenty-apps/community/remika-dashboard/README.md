@@ -12,8 +12,11 @@ This app follows Twenty's official app layout model:
   - mortgage rates
   - selective People import / link / merge from Remika registered users
   - bidirectional Remika contact mirroring back into Twenty People for create / update / delete / restore changes
+  - bidirectional Company / Opportunity / Note / Task bridge sync that shares the same `recordId` / identity / sync ledger contract as People
 
 The bridge uses `recordId` / identity links as the canonical binding key, so Remika-origin changes on an existing People row continue to sync even when the row itself originally came from Twenty.
+
+The live bridge workflows are seeded from the Twenty server prefill helper, and the published body can be repaired with `pnpm twenty:bridge:diagnose -- --repair` when a stale workflowVersion slips into the workspace.
 
 ## Local Setup
 

@@ -6,7 +6,7 @@ import { type RoutePayload } from 'twenty-sdk/logic-function'
 import { createTwentyCoreApiClient } from './twenty-core-api-client'
 
 type RemikaCrmObjectSyncPayload = {
-  objectType?: 'opportunity' | 'task' | null
+  objectType?: 'opportunity' | 'task' | 'company' | 'note' | null
   action?: 'upsert' | 'delete' | null
   recordId?: string | null
   source?: string | null
@@ -25,6 +25,16 @@ type TwentyTaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE'
 
 function safeText(value: unknown): string {
   return `${value || ''}`.trim()
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function toMaybeNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
 }
 
 function computeSignature(secret: string, timestamp: string, rawBody: string) {
@@ -186,9 +196,179 @@ function toTaskUpdateData(data: Record<string, unknown>) {
   return patch
 }
 
+function toCompanyCreateData(data: Record<string, unknown>, recordId: string) {
+  const companyName =
+    safeText(data.name) ||
+    safeText(data.title) ||
+    safeText(data.domainNamePrimaryLinkUrl) ||
+    'Company'
+  const domainNamePrimaryLinkUrl = safeText(
+    data.domainNamePrimaryLinkUrl ?? (isRecord(data.domainName) ? data.domainName.primaryLinkUrl : null)
+  )
+  const address = isRecord(data.address) ? data.address : null
+  const addressStreet1 = safeText(data.addressStreet1 ?? address?.addressStreet1)
+  const addressStreet2 = safeText(data.addressStreet2 ?? address?.addressStreet2)
+  const addressCity = safeText(data.addressCity ?? address?.addressCity)
+  const addressState = safeText(data.addressState ?? address?.addressState)
+  const addressPostcode = safeText(data.addressPostcode ?? address?.addressPostcode)
+  const addressCountry = safeText(data.addressCountry ?? address?.addressCountry)
+
+  const payload: Record<string, unknown> = {
+    id: recordId,
+    name: companyName,
+  }
+
+  if (domainNamePrimaryLinkUrl) {
+    payload.domainName = {
+      primaryLinkUrl: domainNamePrimaryLinkUrl,
+    }
+  }
+
+  if (
+    addressStreet1 ||
+    addressStreet2 ||
+    addressCity ||
+    addressState ||
+    addressPostcode ||
+    addressCountry
+  ) {
+    payload.address = {
+      ...(addressStreet1 ? { addressStreet1 } : {}),
+      ...(addressStreet2 ? { addressStreet2 } : {}),
+      ...(addressCity ? { addressCity } : {}),
+      ...(addressState ? { addressState } : {}),
+      ...(addressPostcode ? { addressPostcode } : {}),
+      ...(addressCountry ? { addressCountry } : {}),
+    }
+  }
+
+  if ('employees' in data) payload.employees = toMaybeNumber(data.employees)
+  if ('position' in data) payload.position = toMaybeNumber(data.position)
+
+  return payload
+}
+
+function toCompanyUpdateData(data: Record<string, unknown>) {
+  const patch: Record<string, unknown> = {}
+
+  if ('name' in data) patch.name = safeText(data.name) || null
+
+  const domainSource = isRecord(data.domainName) ? data.domainName : null
+  if ('domainNamePrimaryLinkUrl' in data || domainSource) {
+    const primaryLinkUrl = safeText(
+      data.domainNamePrimaryLinkUrl ?? domainSource?.primaryLinkUrl
+    )
+    patch.domainName = {
+      primaryLinkUrl: primaryLinkUrl || null,
+    }
+  }
+
+  const addressSource = isRecord(data.address) ? data.address : null
+  if (
+    'addressStreet1' in data ||
+    'addressStreet2' in data ||
+    'addressCity' in data ||
+    'addressState' in data ||
+    'addressPostcode' in data ||
+    'addressCountry' in data ||
+    addressSource
+  ) {
+    patch.address = {
+      ...(safeText(data.addressStreet1 ?? addressSource?.addressStreet1)
+        ? { addressStreet1: safeText(data.addressStreet1 ?? addressSource?.addressStreet1) }
+        : {}),
+      ...(safeText(data.addressStreet2 ?? addressSource?.addressStreet2)
+        ? { addressStreet2: safeText(data.addressStreet2 ?? addressSource?.addressStreet2) }
+        : {}),
+      ...(safeText(data.addressCity ?? addressSource?.addressCity)
+        ? { addressCity: safeText(data.addressCity ?? addressSource?.addressCity) }
+        : {}),
+      ...(safeText(data.addressState ?? addressSource?.addressState)
+        ? { addressState: safeText(data.addressState ?? addressSource?.addressState) }
+        : {}),
+      ...(safeText(data.addressPostcode ?? addressSource?.addressPostcode)
+        ? { addressPostcode: safeText(data.addressPostcode ?? addressSource?.addressPostcode) }
+        : {}),
+      ...(safeText(data.addressCountry ?? addressSource?.addressCountry)
+        ? { addressCountry: safeText(data.addressCountry ?? addressSource?.addressCountry) }
+        : {}),
+    }
+  }
+
+  if ('employees' in data) patch.employees = toMaybeNumber(data.employees)
+  if ('position' in data) patch.position = toMaybeNumber(data.position)
+
+  return patch
+}
+
+function normalizeRichTextPayload(value: unknown, fallbackMarkdown?: string | null) {
+  if (isRecord(value)) {
+    const markdown = safeText(value.markdown ?? value.text ?? value.content ?? fallbackMarkdown)
+    const blocknote =
+      value.blocknote === null || value.blocknote === undefined
+        ? null
+        : isRecord(value.blocknote) || Array.isArray(value.blocknote)
+          ? JSON.stringify(value.blocknote)
+          : safeText(value.blocknote) || null
+
+    if (markdown || blocknote) {
+      return {
+        markdown: markdown || null,
+        blocknote,
+      }
+    }
+  }
+
+  const markdown = safeText(fallbackMarkdown)
+  if (!markdown) return null
+  return {
+    markdown,
+    blocknote: null,
+  }
+}
+
+function toNoteCreateData(data: Record<string, unknown>, recordId: string) {
+  const title = safeText(data.title) || safeText(data.body) || 'Note'
+  const bodyV2 = normalizeRichTextPayload(
+    data.bodyV2,
+    safeText(data.bodyV2Markdown ?? data.body)
+  )
+
+  const payload: Record<string, unknown> = {
+    id: recordId,
+    title,
+  }
+
+  if (bodyV2) {
+    payload.bodyV2 = bodyV2
+  }
+
+  if ('position' in data) payload.position = toMaybeNumber(data.position)
+
+  return payload
+}
+
+function toNoteUpdateData(data: Record<string, unknown>) {
+  const patch: Record<string, unknown> = {}
+
+  if ('title' in data) patch.title = safeText(data.title) || null
+
+  if ('bodyV2' in data || 'body' in data || 'bodyV2Markdown' in data) {
+    const bodyV2 = normalizeRichTextPayload(
+      data.bodyV2,
+      safeText(data.bodyV2Markdown ?? data.body)
+    )
+    if (bodyV2) patch.bodyV2 = bodyV2
+  }
+
+  if ('position' in data) patch.position = toMaybeNumber(data.position)
+
+  return patch
+}
+
 async function findExistingRecord(
   client: CoreApiClient,
-  objectType: 'opportunity' | 'task',
+  objectType: 'opportunity' | 'task' | 'company' | 'note',
   recordId: string,
 ) {
   const result = await client.query({
@@ -205,7 +385,7 @@ async function findExistingRecord(
 
 async function createOrUpdateRecord(
   client: CoreApiClient,
-  objectType: 'opportunity' | 'task',
+  objectType: 'opportunity' | 'task' | 'company' | 'note',
   recordId: string,
   data: Record<string, unknown>,
 ) {
@@ -220,6 +400,32 @@ async function createOrUpdateRecord(
           __args: {
             id: recordId,
             data: toOpportunityUpdateData(data),
+          },
+          id: true,
+        },
+      })
+      return 'updated' as const
+    }
+
+    if (objectType === 'company') {
+      await client.mutation({
+        [updateMutationName]: {
+          __args: {
+            id: recordId,
+            data: toCompanyUpdateData(data),
+          },
+          id: true,
+        },
+      })
+      return 'updated' as const
+    }
+
+    if (objectType === 'note') {
+      await client.mutation({
+        [updateMutationName]: {
+          __args: {
+            id: recordId,
+            data: toNoteUpdateData(data),
           },
           id: true,
         },
@@ -244,6 +450,30 @@ async function createOrUpdateRecord(
       [createMutationName]: {
         __args: {
           data: toOpportunityCreateData(data, recordId),
+        },
+        id: true,
+      },
+    })
+    return 'created' as const
+  }
+
+  if (objectType === 'company') {
+    await client.mutation({
+      [createMutationName]: {
+        __args: {
+          data: toCompanyCreateData(data, recordId),
+        },
+        id: true,
+      },
+    })
+    return 'created' as const
+  }
+
+  if (objectType === 'note') {
+    await client.mutation({
+      [createMutationName]: {
+        __args: {
+          data: toNoteCreateData(data, recordId),
         },
         id: true,
       },
@@ -301,7 +531,14 @@ const handler = async (event: RoutePayload<RemikaCrmObjectSyncPayload>) => {
   const client = createTwentyCoreApiClient()
 
   if (action === 'delete') {
-    const mutationName = objectType === 'opportunity' ? 'deleteOpportunity' : 'deleteTask'
+    const mutationName =
+      objectType === 'opportunity'
+        ? 'deleteOpportunity'
+        : objectType === 'company'
+          ? 'deleteCompany'
+          : objectType === 'note'
+            ? 'deleteNote'
+            : 'deleteTask'
     await client.mutation({
       [mutationName]: {
         __args: { id: recordId },
@@ -333,7 +570,7 @@ export default defineLogicFunction({
   universalIdentifier: '8bf27a35-bd4d-4ed0-a4c7-3eb9f7f4d0f1',
   name: 'sync-remika-crm-object',
   description:
-    'Receives Remika opportunity and task updates and mirrors them back onto the matching Twenty records.',
+    'Receives Remika opportunity, task, company and note updates and mirrors them back onto the matching Twenty records.',
   timeoutSeconds: 10,
   handler,
   httpRouteTriggerSettings: {

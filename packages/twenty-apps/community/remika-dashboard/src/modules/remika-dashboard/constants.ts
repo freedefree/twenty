@@ -16,6 +16,7 @@ export const REMIKA_ORGANIZATION_ID_VARIABLE_UNIVERSAL_IDENTIFIER =
 
 export const CRM_CONTACT_ROLE_VALUES = [
   'client',
+  'buyer',
   'title',
   'escrow',
   'lender',
@@ -25,9 +26,28 @@ export const CRM_CONTACT_ROLE_VALUES = [
   'agent_external',
   'handyman',
   'other',
+  'seller',
+  'co_buyer',
+  'co_seller',
+  'notary',
+  'contractor',
+  'insurance_agent',
+  'appraiser',
+  'tc',
+  'home_inspector',
 ] as const;
 
 export type CrmContactRoleValue = (typeof CRM_CONTACT_ROLE_VALUES)[number];
+
+export {
+  CRM_TWENTY_CONTACT_ROLE_VALUES,
+  CRM_CONTACT_ROLE_TO_TWENTY_CONTACT_ROLE_MAP,
+  CRM_TWENTY_CONTACT_ROLE_TO_CONTACT_ROLE_MAP,
+  toTwentyContactRoleValue,
+  fromTwentyContactRoleValue,
+} from '../../../../../../../../../shared/crm/contact-role';
+
+export type { CrmTwentyContactRoleValue } from '../../../../../../../../../shared/crm/contact-role';
 
 export const REMIKA_CRM_OVERVIEW_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER =
   '1228dfcd-f1e1-4747-a264-3bbafd32770b';

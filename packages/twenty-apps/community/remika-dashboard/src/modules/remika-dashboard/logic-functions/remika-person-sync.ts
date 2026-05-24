@@ -1,9 +1,6 @@
 import { CoreApiClient } from 'twenty-client-sdk/core';
 
-import {
-  CRM_CONTACT_ROLE_VALUES,
-  type CrmContactRoleValue,
-} from 'src/modules/remika-dashboard/constants';
+import { toTwentyContactRoleValue } from '../constants';
 
 export type RemikaPersonSyncInput = {
   contactId?: string | null;
@@ -81,7 +78,10 @@ function normalizePhoneCountryCode(value: unknown): string | null {
   return text || null;
 }
 
-function splitNationalPhoneNumber(value: unknown, callingCode?: unknown): string | null {
+function splitNationalPhoneNumber(
+  value: unknown,
+  callingCode?: unknown,
+): string | null {
   const digits = safeText(value).replace(/\D/g, '');
   if (!digits) return null;
 
@@ -93,14 +93,6 @@ function splitNationalPhoneNumber(value: unknown, callingCode?: unknown): string
 
   if (digits.length === 11 && digits.startsWith('1')) return digits.slice(1);
   return digits.slice(-10);
-}
-
-function normalizeContactRoleValue(value: unknown): CrmContactRoleValue | null {
-  const text = safeText(value).toLowerCase();
-  if (!text) return null;
-  return CRM_CONTACT_ROLE_VALUES.includes(text as CrmContactRoleValue)
-    ? (text as CrmContactRoleValue)
-    : null;
 }
 
 function splitName(value: unknown) {
@@ -143,36 +135,43 @@ function buildPersonMutationData(input: RemikaPersonSyncInput) {
 
   if (input.phone !== undefined) {
     data.phones = {
-      primaryPhoneNumber: splitNationalPhoneNumber(input.phone, input.phoneCallingCode) || '',
+      primaryPhoneNumber:
+        splitNationalPhoneNumber(input.phone, input.phoneCallingCode) || '',
       ...(input.phoneCallingCode !== undefined
         ? {
-            primaryPhoneCallingCode: normalizePhoneCallingCode(input.phoneCallingCode) || '',
+            primaryPhoneCallingCode:
+              normalizePhoneCallingCode(input.phoneCallingCode) || '',
           }
         : {}),
       ...(input.phoneCountryCode !== undefined
         ? {
-            primaryPhoneCountryCode: normalizePhoneCountryCode(input.phoneCountryCode) || '',
+            primaryPhoneCountryCode:
+              normalizePhoneCountryCode(input.phoneCountryCode) || '',
           }
         : {}),
     };
-  } else if (input.phoneCallingCode !== undefined || input.phoneCountryCode !== undefined) {
+  } else if (
+    input.phoneCallingCode !== undefined ||
+    input.phoneCountryCode !== undefined
+  ) {
     data.phones = {
       ...(input.phoneCallingCode !== undefined
         ? {
-            primaryPhoneCallingCode: normalizePhoneCallingCode(input.phoneCallingCode) || '',
+            primaryPhoneCallingCode:
+              normalizePhoneCallingCode(input.phoneCallingCode) || '',
           }
         : {}),
       ...(input.phoneCountryCode !== undefined
         ? {
-            primaryPhoneCountryCode: normalizePhoneCountryCode(input.phoneCountryCode) || '',
+            primaryPhoneCountryCode:
+              normalizePhoneCountryCode(input.phoneCountryCode) || '',
           }
         : {}),
     };
   }
 
   if (input.contactRole !== undefined) {
-    const contactRole = normalizeContactRoleValue(input.contactRole);
-    data.contactRole = contactRole ? contactRole.toUpperCase() : null;
+    data.contactRole = toTwentyContactRoleValue(input.contactRole);
   }
 
   if (input.city !== undefined) {
@@ -209,8 +208,10 @@ async function findPersonById(client: CoreApiClient, recordId: string) {
     },
   });
 
-  return (result as { people?: { edges?: Array<{ node?: { id?: string } }> } })
-    .people?.edges?.[0]?.node?.id || null;
+  return (
+    (result as { people?: { edges?: Array<{ node?: { id?: string } }> } })
+      .people?.edges?.[0]?.node?.id || null
+  );
 }
 
 export async function deleteRemikaPersonFromTwenty(
@@ -253,13 +254,19 @@ export async function syncRemikaPersonToTwenty(
   input: RemikaPersonSyncInput,
 ): Promise<RemikaPersonSyncResult | { skipped: true; reason: string }> {
   const recordId = resolveRecordId(input);
-  const nextRole = normalizeContactRoleValue(input.contactRole);
+  const nextRole = toTwentyContactRoleValue(input.contactRole);
+  const nextContactRole =
+    input.contactRole === undefined ? undefined : nextRole;
 
   if (!recordId) {
     return { skipped: true, reason: 'missing recordId' };
   }
 
-  if (input.contactRole !== undefined && input.contactRole !== null && !nextRole) {
+  if (
+    input.contactRole !== undefined &&
+    input.contactRole !== null &&
+    !nextRole
+  ) {
     return { skipped: true, reason: 'invalid contactRole' };
   }
 
@@ -280,13 +287,17 @@ export async function syncRemikaPersonToTwenty(
         jobTitle: true,
       },
     });
+    const updateContactRole = result?.updatePerson?.contactRole as
+      | string
+      | null
+      | undefined;
 
     return {
       processed: true,
       action: 'updated',
       recordId,
       personId: result?.updatePerson?.id || recordId,
-      contactRole: result?.updatePerson?.contactRole || data.contactRole || null,
+      contactRole: updateContactRole || nextContactRole || null,
       name: input.name !== undefined ? safeText(input.name) || null : null,
       email: input.email !== undefined ? normalizeEmail(input.email) : null,
       phone: input.phone !== undefined ? normalizePhone(input.phone) : null,
@@ -299,8 +310,10 @@ export async function syncRemikaPersonToTwenty(
           ? normalizePhoneCountryCode(input.phoneCountryCode)
           : null,
       city: result?.updatePerson?.city || safeText(input.city) || null,
-      jobTitle: result?.updatePerson?.jobTitle || safeText(input.jobTitle) || null,
-      companyId: result?.updatePerson?.companyId || safeText(input.companyId) || null,
+      jobTitle:
+        result?.updatePerson?.jobTitle || safeText(input.jobTitle) || null,
+      companyId:
+        result?.updatePerson?.companyId || safeText(input.companyId) || null,
       source: input.source || null,
     };
   }
@@ -320,13 +333,17 @@ export async function syncRemikaPersonToTwenty(
       jobTitle: true,
     },
   });
+  const createContactRole = result?.createPerson?.contactRole as
+    | string
+    | null
+    | undefined;
 
   return {
     processed: true,
     action: 'created',
     recordId,
     personId: result?.createPerson?.id || recordId,
-    contactRole: result?.createPerson?.contactRole || data.contactRole || null,
+    contactRole: createContactRole || nextContactRole || null,
     name: input.name !== undefined ? safeText(input.name) || null : null,
     email: input.email !== undefined ? normalizeEmail(input.email) : null,
     phone: input.phone !== undefined ? normalizePhone(input.phone) : null,
@@ -339,8 +356,10 @@ export async function syncRemikaPersonToTwenty(
         ? normalizePhoneCountryCode(input.phoneCountryCode)
         : null,
     city: result?.createPerson?.city || safeText(input.city) || null,
-    jobTitle: result?.createPerson?.jobTitle || safeText(input.jobTitle) || null,
-    companyId: result?.createPerson?.companyId || safeText(input.companyId) || null,
+    jobTitle:
+      result?.createPerson?.jobTitle || safeText(input.jobTitle) || null,
+    companyId:
+      result?.createPerson?.companyId || safeText(input.companyId) || null,
     source: input.source || null,
   };
 }

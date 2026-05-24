@@ -3,10 +3,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { defineLogicFunction } from 'twenty-sdk/define';
 import { type RoutePayload } from 'twenty-sdk/logic-function';
 
-import {
-  CRM_CONTACT_ROLE_VALUES,
-  type CrmContactRoleValue,
-} from 'src/modules/remika-dashboard/constants';
+import { toTwentyContactRoleValue } from '../constants';
 import {
   deleteRemikaPersonFromTwenty,
   syncRemikaPersonToTwenty,
@@ -34,16 +31,10 @@ function safeText(value: unknown): string {
   return `${value || ''}`.trim();
 }
 
-function normalizeContactRoleValue(value: unknown): CrmContactRoleValue | null {
-  const text = safeText(value).toLowerCase();
-  if (!text) return null;
-  return CRM_CONTACT_ROLE_VALUES.includes(text as CrmContactRoleValue)
-    ? (text as CrmContactRoleValue)
-    : null;
-}
-
 function computeSignature(secret: string, timestamp: string, rawBody: string) {
-  return createHmac('sha256', secret).update(`${timestamp}:${rawBody}`, 'utf8').digest('hex');
+  return createHmac('sha256', secret)
+    .update(`${timestamp}:${rawBody}`, 'utf8')
+    .digest('hex');
 }
 
 function verifySignature(input: {
@@ -52,7 +43,11 @@ function verifySignature(input: {
   rawBody: string;
   signature: string;
 }) {
-  const expected = computeSignature(input.secret, input.timestamp, input.rawBody);
+  const expected = computeSignature(
+    input.secret,
+    input.timestamp,
+    input.rawBody,
+  );
   const provided = safeText(input.signature).replace(/^sha256=/i, '');
 
   if (!expected || !provided) return false;
@@ -88,7 +83,13 @@ const handler = async (event: RoutePayload<RemikaContactRoleSyncPayload>) => {
 
   const action = safeText(body.action).toLowerCase();
   const normalizedAction =
-    action === 'delete' ? 'delete' : action === '' ? 'upsert' : action === 'upsert' ? 'upsert' : null;
+    action === 'delete'
+      ? 'delete'
+      : action === ''
+        ? 'upsert'
+        : action === 'upsert'
+          ? 'upsert'
+          : null;
   const recordId = resolveRecordId(body);
   if (!recordId || !normalizedAction) {
     return {
@@ -129,9 +130,16 @@ const handler = async (event: RoutePayload<RemikaContactRoleSyncPayload>) => {
     return result;
   }
 
-  const contactRole = normalizeContactRoleValue(body.contactRole);
-  if (!contactRole) {
+  if (body.contactRole === undefined) {
     return { skipped: true, reason: 'missing contactRole' };
+  }
+
+  const contactRole =
+    body.contactRole === null
+      ? null
+      : toTwentyContactRoleValue(body.contactRole);
+  if (body.contactRole !== null && !contactRole) {
+    return { skipped: true, reason: 'invalid contactRole' };
   }
 
   const result = await syncRemikaPersonToTwenty(client, {
@@ -142,7 +150,7 @@ const handler = async (event: RoutePayload<RemikaContactRoleSyncPayload>) => {
     phone: body.phone ?? undefined,
     phoneCallingCode: body.phoneCallingCode ?? undefined,
     phoneCountryCode: body.phoneCountryCode ?? undefined,
-    contactRole: contactRole.toUpperCase(),
+    contactRole,
     companyId: body.companyId ?? undefined,
     city: body.city ?? undefined,
     jobTitle: body.jobTitle ?? undefined,
@@ -168,6 +176,9 @@ export default defineLogicFunction({
     path: '/remika/contact-role-sync',
     httpMethod: 'POST',
     isAuthRequired: false,
-    forwardedRequestHeaders: ['x-remika-sync-signature', 'x-remika-sync-timestamp'],
+    forwardedRequestHeaders: [
+      'x-remika-sync-signature',
+      'x-remika-sync-timestamp',
+    ],
   },
 });

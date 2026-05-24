@@ -16,7 +16,9 @@ type BridgeAction = 'UPSERTED' | 'DELETED' | 'RESTORED';
 
 type BridgeObjectName =
   | 'person'
+  | 'company'
   | 'opportunity'
+  | 'note'
   | 'task'
   | 'dashboard'
   | 'timelineActivity';
@@ -32,7 +34,9 @@ type BridgeObjectConfig = {
   objectName: BridgeObjectName;
   remikaResource:
     | 'contacts'
+    | 'companies'
     | 'opportunities'
+    | 'notes'
     | 'tasks'
     | 'dashboards'
     | 'activities';
@@ -192,7 +196,6 @@ function buildBridgeWorkflowBody({
         phoneCallingCode: `{{${triggerId}.properties.after.phones.primaryPhoneCallingCode}}`,
         phoneCountryCode: `{{${triggerId}.properties.after.phones.primaryPhoneCountryCode}}`,
         contactRole: `{{${triggerId}.properties.after.contactRole}}`,
-        companyId: `{{${triggerId}.properties.after.companyId}}`,
         city: `{{${triggerId}.properties.after.city}}`,
         jobTitle: `{{${triggerId}.properties.after.jobTitle}}`,
         source: 'twenty',
@@ -201,6 +204,27 @@ function buildBridgeWorkflowBody({
           workspaceId,
           objectName: 'person',
           eventType: `person.${action.toLowerCase()}`,
+          recordId: `{{${triggerId}.properties.after.id}}`,
+        },
+      };
+    case 'company':
+      return {
+        name: `{{${triggerId}.properties.after.name}}`,
+        domainNamePrimaryLinkUrl: `{{${triggerId}.properties.after.domainName.primaryLinkUrl}}`,
+        addressStreet1: `{{${triggerId}.properties.after.address.addressStreet1}}`,
+        addressStreet2: `{{${triggerId}.properties.after.address.addressStreet2}}`,
+        addressCity: `{{${triggerId}.properties.after.address.addressCity}}`,
+        addressState: `{{${triggerId}.properties.after.address.addressState}}`,
+        addressPostcode: `{{${triggerId}.properties.after.address.addressPostcode}}`,
+        addressCountry: `{{${triggerId}.properties.after.address.addressCountry}}`,
+        employees: `{{${triggerId}.properties.after.employees}}`,
+        position: `{{${triggerId}.properties.after.position}}`,
+        source: 'twenty',
+        metadata: {
+          source: 'twenty',
+          workspaceId,
+          objectName: 'company',
+          eventType: `company.${action.toLowerCase()}`,
           recordId: `{{${triggerId}.properties.after.id}}`,
         },
       };
@@ -224,6 +248,23 @@ function buildBridgeWorkflowBody({
           stage: normalizeRemikaOpportunityStage(
             `{{${triggerId}.properties.after.stage}}`,
           ),
+        },
+      };
+    case 'note':
+      return {
+        title: `{{${triggerId}.properties.after.title}}`,
+        bodyV2: {
+          markdown: `{{${triggerId}.properties.after.bodyV2Markdown}}`,
+          blocknote: `{{${triggerId}.properties.after.bodyV2Blocknote}}`,
+        },
+        position: `{{${triggerId}.properties.after.position}}`,
+        source: 'twenty',
+        metadata: {
+          source: 'twenty',
+          workspaceId,
+          objectName: 'note',
+          eventType: `note.${action.toLowerCase()}`,
+          recordId: `{{${triggerId}.properties.after.id}}`,
         },
       };
     case 'task':
@@ -312,6 +353,14 @@ function buildBridgeWorkflowRecords({
       buildUpsertBody: (ctx) => buildBridgeWorkflowBody(ctx),
     },
     {
+      objectName: 'company',
+      remikaResource: 'companies',
+      bridgeLabel: 'Company',
+      upsertPath: '/api/public/crm/v1/companies/{{trigger.properties.after.id}}',
+      deletePath: '/api/public/crm/v1/companies/{{trigger.properties.before.id}}',
+      buildUpsertBody: (ctx) => buildBridgeWorkflowBody(ctx),
+    },
+    {
       objectName: 'opportunity',
       remikaResource: 'opportunities',
       bridgeLabel: 'Opportunity',
@@ -327,6 +376,14 @@ function buildBridgeWorkflowRecords({
       bridgeLabel: 'Task',
       upsertPath: '/api/public/crm/v1/tasks/{{trigger.properties.after.id}}',
       deletePath: '/api/public/crm/v1/tasks/{{trigger.properties.before.id}}',
+      buildUpsertBody: (ctx) => buildBridgeWorkflowBody(ctx),
+    },
+    {
+      objectName: 'note',
+      remikaResource: 'notes',
+      bridgeLabel: 'Note',
+      upsertPath: '/api/public/crm/v1/notes/{{trigger.properties.after.id}}',
+      deletePath: '/api/public/crm/v1/notes/{{trigger.properties.before.id}}',
       buildUpsertBody: (ctx) => buildBridgeWorkflowBody(ctx),
     },
     {
