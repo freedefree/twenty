@@ -11,6 +11,8 @@ import {
   REMIKA_DASHBOARD_TAB_UNIVERSAL_IDENTIFIER,
   REMIKA_MORTGAGE_RATES_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
   REMIKA_MORTGAGE_WIDGET_UNIVERSAL_IDENTIFIER,
+  REMIKA_NEXT_ACTIONS_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
+  REMIKA_NEXT_ACTIONS_WIDGET_UNIVERSAL_IDENTIFIER,
   TWENTY_STANDARD_MY_FIRST_DASHBOARD_LAYOUT_UNIVERSAL_IDENTIFIER,
 } from 'src/modules/remika-dashboard/constants';
 
@@ -43,6 +45,17 @@ export default definePageLayoutTab({
         configurationType: 'FRONT_COMPONENT',
         frontComponentUniversalIdentifier:
           REMIKA_MORTGAGE_RATES_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
+      },
+    },
+    {
+      universalIdentifier: REMIKA_NEXT_ACTIONS_WIDGET_UNIVERSAL_IDENTIFIER,
+      title: 'Next actions',
+      type: 'FRONT_COMPONENT',
+      gridPosition: { row: 4, column: 8, rowSpan: 4, columnSpan: 4 },
+      configuration: {
+        configurationType: 'FRONT_COMPONENT',
+        frontComponentUniversalIdentifier:
+          REMIKA_NEXT_ACTIONS_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
       },
     },
     {

@@ -44,6 +44,23 @@ export type CrmOverviewResponse = {
   };
 };
 
+export type {
+  CrmNextAction,
+  CrmNextActionDetailData,
+  CrmNextActionDetailResponse,
+  CrmNextActionDraftResponse,
+  CrmNextActionExecutionState,
+  CrmNextActionHandoffIdentityInput,
+  CrmNextActionIdentityInput,
+  CrmNextActionPermissions,
+  CrmNextActionReviewEvent,
+  CrmNextActionReviewStatus,
+  CrmNextActionSnapshot,
+  CrmNextActionSyncState,
+  CrmNextActionsResponse,
+  CrmNextActionTaskResponse,
+} from '../../../../../../../../../shared/crm/next-actions';
+
 export type CrmContactImportMatchType =
   | 'consumer_user_id'
   | 'email'

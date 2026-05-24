@@ -5,9 +5,14 @@ import {
   DEFAULT_REMIKA_API_PUBLIC_KEY,
 } from 'src/modules/remika-dashboard/constants';
 import {
+  type CrmNextActionHandoffIdentityInput,
   type CrmContactImportActionResponse,
   type CrmContactImportCandidatesResponse,
 } from 'src/modules/remika-dashboard/types';
+import {
+  buildCrmNextActionHandoffUrl as buildSharedCrmNextActionHandoffUrl,
+  buildCrmNextActionIdentityQuery,
+} from '../../../../../../../../../shared/crm/next-actions';
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, '');
 
@@ -140,6 +145,32 @@ export const fetchCrmOverview = <T>() =>
   fetchRemikaJson<T>('/api/crm/overview', {
     organizationId: getRemikaOrganizationId(),
   });
+
+export const fetchCrmNextActions = <T>(
+  searchParams?: Record<string, string | undefined>,
+) =>
+  fetchRemikaJson<T>('/api/crm/next-actions', {
+    organizationId: getRemikaOrganizationId(),
+    ...searchParams,
+  });
+
+export const fetchCrmNextActionDetail = <T>(
+  input: CrmNextActionHandoffIdentityInput,
+  options?: {
+    includeHistory?: boolean;
+  },
+) =>
+  fetchRemikaJson<T>(
+    `/api/crm/next-actions/${encodeURIComponent(input.actionId)}`,
+    {
+      ...buildCrmNextActionIdentityQuery(input),
+      includeHistory: options?.includeHistory === false ? 'false' : 'true',
+      organizationId: getRemikaOrganizationId(),
+    },
+  );
+
+export const buildRemikaCrmHandoffUrl = (input: CrmNextActionHandoffIdentityInput) =>
+  buildSharedCrmNextActionHandoffUrl(getRemikaApiBaseUrl(), input);
 
 export const fetchCrmPublicJson = async <T>(
   pathname: string,
