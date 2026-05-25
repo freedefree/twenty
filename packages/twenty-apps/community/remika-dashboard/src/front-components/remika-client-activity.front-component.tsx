@@ -407,7 +407,11 @@ const RemikaClientActivity = () => {
                 <p style={styles.text}>
                   Share response: sent {activity.shareResponse.sentCount}, responded{' '}
                   {activity.shareResponse.respondedCount}, opened{' '}
-                  {activity.shareResponse.openedCount ?? 'planned'}
+                  {activity.shareResponse.openedCount ?? 'none'}
+                </p>
+                <p style={styles.text}>
+                  Last content view:{' '}
+                  {formatDateTime(activity.summary.lastContentViewedAt)}
                 </p>
               </div>
             </div>
@@ -445,6 +449,17 @@ const RemikaClientActivity = () => {
                 <p style={styles.text}>
                   Content status: {activity.contentInterest.status}
                 </p>
+                {activity.contentInterest.topics.length ? (
+                  <div style={styles.tagRow}>
+                    {activity.contentInterest.topics.slice(0, 4).map(topic => (
+                      <Tag
+                        key={topic.topic}
+                        color="blue"
+                        text={`${topic.topic} · ${topic.count}`}
+                      />
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
               <div>
