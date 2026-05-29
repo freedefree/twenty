@@ -9,11 +9,17 @@ import {
   type CrmNextActionHandoffIdentityInput,
   type CrmContactImportActionResponse,
   type CrmContactImportCandidatesResponse,
+  type CrmPropertySearchRequest,
+  type CrmPropertySearchResponse,
 } from 'src/modules/remika-dashboard/types';
 import {
   buildCrmNextActionHandoffUrl as buildSharedCrmNextActionHandoffUrl,
   buildCrmNextActionIdentityQuery,
 } from '../../../../../../../../../shared/crm/next-actions';
+import {
+  buildCrmPropertySearchHandoffPath,
+  normalizeCrmPropertySearchRequest,
+} from '../../../../../../../../../shared/search/property-search-contract';
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, '');
 
@@ -204,6 +210,48 @@ export const fetchCrmClientActivitySummary = <T>(input: {
 export const buildRemikaCrmHandoffUrl = (input: CrmNextActionHandoffIdentityInput) =>
   buildSharedCrmNextActionHandoffUrl(getRemikaApiBaseUrl(), input);
 
+export const buildRemikaPropertySearchHandoffUrl = (input: unknown) => {
+  const organizationId = getRemikaOrganizationId();
+  const request = normalizeCrmPropertySearchRequest({
+    ...(input && typeof input === 'object' ? input : {}),
+    sourceSurface: 'twenty_crm',
+    relationContext: {
+      ...(input &&
+      typeof input === 'object' &&
+      'relationContext' in input &&
+      input.relationContext &&
+      typeof input.relationContext === 'object'
+        ? input.relationContext
+        : {}),
+      organizationId,
+    },
+  });
+
+  return new URL(
+    buildCrmPropertySearchHandoffPath(request),
+    `${getRemikaApiBaseUrl()}/`,
+  ).toString();
+};
+
+export const buildRemikaEmbeddedPropertySearchUrl = (input?: {
+  transactionType?: 'sale' | 'sold' | 'rent';
+  clientId?: string | null;
+  contactId?: string | null;
+  opportunityId?: string | null;
+  clientName?: string | null;
+  parentOrigin?: string | null;
+}) =>
+  buildRemikaApiUrl('/crm/search/embed', {
+    clientId: input?.clientId || undefined,
+    contactId: input?.contactId || undefined,
+    opportunityId: input?.opportunityId || undefined,
+    clientName: input?.clientName || undefined,
+    organizationId: getRemikaOrganizationId(),
+    parentOrigin: input?.parentOrigin || undefined,
+    sourceSurface: 'twenty_crm',
+    transactionType: input?.transactionType || 'sale',
+  });
+
 export const fetchCrmPublicJson = async <T>(
   pathname: string,
   searchParams?: Record<string, string | undefined>,
@@ -234,3 +282,19 @@ export const fetchCrmImportCandidates = <T>(
 
 export const importCrmContactFromProfile = <T>(body: unknown) =>
   postCrmPublicJson<T>('/api/public/crm/v1/contacts/import', body);
+
+export const searchCrmProperties = (
+  body: Partial<CrmPropertySearchRequest>,
+): Promise<CrmPropertySearchResponse> =>
+  postCrmPublicJson<CrmPropertySearchResponse>(
+    '/api/public/crm/v1/property-search',
+    {
+      ...body,
+      sourceSurface: 'twenty_crm',
+      relationContext: {
+        ...body.relationContext,
+        organizationId:
+          body.relationContext?.organizationId || getRemikaOrganizationId(),
+      },
+    },
+  );

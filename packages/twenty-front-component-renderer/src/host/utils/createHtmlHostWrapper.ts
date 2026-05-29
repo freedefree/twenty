@@ -278,6 +278,14 @@ const FORCED_PROPS_BY_TAG: Record<string, Record<string, unknown>> = {
   iframe: { sandbox: '' },
 };
 
+const mergeHostProps = (
+  reactProps: Record<string, unknown>,
+  forcedProps: Record<string, unknown> | undefined,
+) => ({
+  ...(forcedProps || {}),
+  ...reactProps,
+});
+
 const TEXT_LIKE_INPUT_TYPES = new Set([
   'text',
   'search',
@@ -330,8 +338,7 @@ const createCaretPreservingElement = (
       : undefined;
 
   return React.createElement(htmlTag, {
-    ...rest,
-    ...forcedProps,
+    ...mergeHostProps(rest, forcedProps),
     defaultValue: initialValue,
     ref: (node: CaretPreservingElement | null) => {
       if (!isDefined(node)) {
@@ -360,7 +367,7 @@ export const createHtmlHostWrapper = (htmlTag: string) => {
 
     return React.createElement(
       htmlTag,
-      { ...reactProps, ...forcedProps },
+      mergeHostProps(reactProps, forcedProps),
       isVoid ? undefined : children,
     );
   };

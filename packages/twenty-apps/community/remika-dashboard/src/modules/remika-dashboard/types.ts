@@ -68,6 +68,17 @@ export type {
   CrmClientActivityTwentySafeSnapshot,
 } from '../../../../../../../../../shared/crm/client-activity';
 
+export type {
+  CrmPropertySearchDirectQuery,
+  CrmPropertySearchExecutionIntent,
+  CrmPropertySearchQuery,
+  CrmPropertySearchRegion,
+  CrmPropertySearchRequest,
+  CrmPropertySearchResponse,
+  CrmPropertySearchResponseData,
+  CrmPropertySearchResultItem,
+} from '../../../../../../../../../shared/search/property-search-contract';
+
 export type CrmContactImportMatchType =
   | 'consumer_user_id'
   | 'email'

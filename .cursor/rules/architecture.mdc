@@ -21,6 +21,12 @@ packages/
 └── twenty-emails/    # Email templates
 ```
 
+## Remika Integration Boundaries (2026-05-29)
+- Remika dashboard app code lives under `packages/twenty-apps/community/remika-dashboard`; keep it as a Twenty app/front-component integration layer, not a copy of Remika's Vue/Nuxt search app.
+- The Remika Search tab/front component embeds Remika `/crm/search/embed` in an iframe and uses handoff links for full-page flows. Twenty must not import Remika Vue components, Pinia stores, Nuxt routes, or duplicate the search engine.
+- The iframe host wrapper must preserve app-provided props such as `sandbox="allow-scripts ..."`; forced defaults must not overwrite front component sandbox tokens.
+- Persisted page-layout widget metadata may keep `configurationType` while losing GraphQL `__typename`. Widget configuration guards must accept `configurationType: FRONT_COMPONENT` for front components, otherwise record detail custom tabs can render `No Data` after reload.
+
 ## Key Principles
 - **Functional components only** (no classes)
 - **Named exports only** (no default exports)

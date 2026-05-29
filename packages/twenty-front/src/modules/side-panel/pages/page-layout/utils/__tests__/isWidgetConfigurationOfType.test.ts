@@ -1,4 +1,5 @@
 import { isWidgetConfigurationOfType } from '@/side-panel/pages/page-layout/utils/isWidgetConfigurationOfType';
+import { WidgetConfigurationType } from '~/generated-metadata/graphql';
 import {
   ALL_CHART_CONFIGURATIONS,
   TEST_BAR_CHART_CONFIGURATION,
@@ -17,11 +18,35 @@ describe('isWidgetConfigurationOfType', () => {
     ).toBe(true);
   });
 
+  it('returns true when configurationType matches and __typename is missing', () => {
+    expect(
+      isWidgetConfigurationOfType(
+        {
+          configurationType: WidgetConfigurationType.FRONT_COMPONENT,
+          frontComponentId: 'front-component-id',
+        },
+        'FrontComponentConfiguration',
+      ),
+    ).toBe(true);
+  });
+
   it('returns false when __typename does not match', () => {
     expect(
       isWidgetConfigurationOfType(
         TEST_BAR_CHART_CONFIGURATION,
         'PieChartConfiguration',
+      ),
+    ).toBe(false);
+  });
+
+  it('returns false when configurationType does not match and __typename is missing', () => {
+    expect(
+      isWidgetConfigurationOfType(
+        {
+          configurationType: WidgetConfigurationType.IFRAME,
+          url: 'https://example.com',
+        },
+        'FrontComponentConfiguration',
       ),
     ).toBe(false);
   });

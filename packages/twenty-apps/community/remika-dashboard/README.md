@@ -5,7 +5,7 @@ Native Twenty dashboard widgets for Remika API data.
 This app follows Twenty's official app layout model:
 
 - React front components render inside Twenty UI as `FRONT_COMPONENT` widgets.
-- A `definePageLayoutTab` manifest adds a `Remika` tab to the standard `My First Dashboard` layout.
+- `definePageLayoutTab` manifests add `Remika` and `Search` tabs to the standard `My First Dashboard` layout.
 - The widgets read Remika's existing APIs directly from the browser with credentials included.
 - The dashboard tab currently includes:
   - CRM overview
@@ -14,6 +14,7 @@ This app follows Twenty's official app layout model:
   - selective People import / link / merge from Remika registered users
   - bidirectional Remika contact mirroring back into Twenty People for create / update / delete / restore changes
   - bidirectional Company / Opportunity / Note / Task bridge sync that shares the same `recordId` / identity / sync ledger contract as People
+- The Search tab embeds Remika `/crm/search/embed` as a full-height workspace with map, filters, cards, split/grid/table views, transaction toggles, and an `Open full page` handoff.
 
 The bridge uses `recordId` / identity links as the canonical binding key, so Remika-origin changes on an existing People row continue to sync even when the row itself originally came from Twenty.
 
@@ -29,6 +30,10 @@ yarn install
 yarn twenty remote add --api-url http://localhost:3100
 yarn twenty dev --once
 ```
+
+`yarn twenty dev --once` only syncs the Remika app manifest and bundled front component files into the live Twenty workspace. If the Search tab iframe is blank with a browser error such as `Blocked script execution ... frame is sandboxed and the 'allow-scripts' permission is not set`, rebuild the local Twenty frontend/image so `twenty-front-component-renderer` is updated too, then recreate the Twenty server/worker containers.
+
+If a manually added Remika Search front component renders during layout edit but shows `No Data` after leaving/reopening the record detail page, check Twenty front's widget configuration guard. Persisted page-layout metadata can retain `configurationType: FRONT_COMPONENT` without GraphQL `__typename`, so front component rendering must accept the stable `configurationType` fallback.
 
 `REMIKA_API_BASE_URL` defaults to `http://localhost:3000`. Override it from the Twenty app settings when the Remika API runs somewhere else. In local dev, logic functions may use `http://host.docker.internal:3000`, but browser front components normalize that host back to `http://localhost:3000` because they execute in the user's browser iframe.
 

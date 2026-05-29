@@ -20,7 +20,7 @@ import {
   type TimelineConfiguration,
   type ViewConfiguration,
   type WidgetConfiguration,
-  type WidgetConfigurationType,
+  WidgetConfigurationType,
   type WorkflowConfiguration,
   type WorkflowRunConfiguration,
   type WorkflowVersionConfiguration,
@@ -127,6 +127,35 @@ type WidgetConfigurationTypenameMap = {
 
 type WidgetConfigurationTypename = keyof WidgetConfigurationTypenameMap;
 
+const WIDGET_CONFIGURATION_TYPE_BY_TYPENAME: Record<
+  WidgetConfigurationTypename,
+  WidgetConfigurationType
+> = {
+  AggregateChartConfiguration: WidgetConfigurationType.AGGREGATE_CHART,
+  BarChartConfiguration: WidgetConfigurationType.BAR_CHART,
+  CalendarConfiguration: WidgetConfigurationType.CALENDAR,
+  EmailThreadConfiguration: WidgetConfigurationType.EMAIL_THREAD,
+  EmailsConfiguration: WidgetConfigurationType.EMAILS,
+  FieldConfiguration: WidgetConfigurationType.FIELD,
+  FieldRichTextConfiguration: WidgetConfigurationType.FIELD_RICH_TEXT,
+  FieldsConfiguration: WidgetConfigurationType.FIELDS,
+  FilesConfiguration: WidgetConfigurationType.FILES,
+  FrontComponentConfiguration: WidgetConfigurationType.FRONT_COMPONENT,
+  GaugeChartConfiguration: WidgetConfigurationType.GAUGE_CHART,
+  IframeConfiguration: WidgetConfigurationType.IFRAME,
+  LineChartConfiguration: WidgetConfigurationType.LINE_CHART,
+  NotesConfiguration: WidgetConfigurationType.NOTES,
+  PieChartConfiguration: WidgetConfigurationType.PIE_CHART,
+  RecordTableConfiguration: WidgetConfigurationType.RECORD_TABLE,
+  StandaloneRichTextConfiguration: WidgetConfigurationType.STANDALONE_RICH_TEXT,
+  TasksConfiguration: WidgetConfigurationType.TASKS,
+  TimelineConfiguration: WidgetConfigurationType.TIMELINE,
+  ViewConfiguration: WidgetConfigurationType.VIEW,
+  WorkflowConfiguration: WidgetConfigurationType.WORKFLOW,
+  WorkflowRunConfiguration: WidgetConfigurationType.WORKFLOW_RUN,
+  WorkflowVersionConfiguration: WidgetConfigurationType.WORKFLOW_VERSION,
+};
+
 export type WidgetConfigurationOfType<T extends WidgetConfigurationTypename> =
   WidgetConfigurationTypenameMap[T];
 
@@ -141,5 +170,9 @@ export const isWidgetConfigurationOfType = <
     | undefined,
   typename: T,
 ): configuration is WidgetConfigurationTypenameMap[T] => {
-  return configuration?.__typename === typename;
+  return (
+    configuration?.__typename === typename ||
+    configuration?.configurationType ===
+      WIDGET_CONFIGURATION_TYPE_BY_TYPENAME[typename]
+  );
 };
